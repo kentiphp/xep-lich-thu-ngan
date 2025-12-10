@@ -8,8 +8,6 @@ import {
   generateWeekSchedule,
   updateDayOff,
   updateShiftAssignment,
-  saveToLocalStorage,
-  loadFromLocalStorage,
 } from "@/lib/schedule";
 import WeekNavigator from "@/components/WeekNavigator";
 import ViewOnlySchedule from "@/components/ViewOnlySchedule";
@@ -17,66 +15,97 @@ import WeekScheduleView from "@/components/WeekScheduleView";
 import Link from "next/link";
 
 export default function Home() {
-  const [employees, setEmployees] = useState<Employee[]>(() =>
-    typeof window !== "undefined"
-      ? loadFromLocalStorage<Employee[]>("employees", getDefaultEmployees())
-      : getDefaultEmployees()
-  );
+  const [employees, setEmployees] = useState<Employee[]>([]);
   const [currentWeekStart, setCurrentWeekStart] = useState<Date>(() =>
     getMonday(new Date())
   );
   const [schedule, setSchedule] = useState<WeekSchedule | null>(null);
-  const [preferences, setPreferences] = useState<EmployeePreferences[]>(() =>
-    typeof window !== "undefined"
-      ? loadFromLocalStorage<EmployeePreferences[]>("preferences", [])
-      : []
-  );
-  const mounted = true; // Always mounted on client
+  const [preferences, setPreferences] = useState<EmployeePreferences[]>([]);
+  const [mounted, setMounted] = useState(false);
   const [viewMode, setViewMode] = useState<"simple" | "detailed">("simple");
+  const [loading, setLoading] = useState(true);
 
-  // Generate schedule when week changes or employees change
+  // Load data from database
   useEffect(() => {
-    if (!mounted) return;
+    async function loadData() {
+      try {
+        setLoading(true);
 
-    const savedScheduleKey = `schedule_${
-      currentWeekStart.toISOString().split("T")[0]
-    }`;
-    const savedSchedule = loadFromLocalStorage<WeekSchedule | null>(
-      savedScheduleKey,
-      null
-    );
+        // Fetch employees
+        const empRes = await fetch("/api/employees");
+        const empData = await empRes.json();
+        if (Array.isArray(empData) && empData.length > 0) {
+          setEmployees(empData);
+        } else {
+          // Initialize with default employees if none exist
+          const defaultEmps = getDefaultEmployees();
+          for (const emp of defaultEmps) {
+            await fetch("/api/employees", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(emp),
+            });
+          }
+          setEmployees(defaultEmps);
+        }
 
-    if (savedSchedule) {
-      setSchedule(savedSchedule);
-    } else {
-      const newSchedule = generateWeekSchedule(
-        currentWeekStart,
-        employees,
-        undefined,
-        preferences
-      );
-      setSchedule(newSchedule);
-      saveToLocalStorage(savedScheduleKey, newSchedule);
+        // Fetch preferences
+        const prefRes = await fetch("/api/preferences");
+        const prefData = await prefRes.json();
+        if (Array.isArray(prefData)) {
+          setPreferences(prefData);
+        }
+
+        setMounted(true);
+      } catch (error) {
+        console.error("Error loading data:", error);
+        // Fallback to default data
+        setEmployees(getDefaultEmployees());
+        setMounted(true);
+      } finally {
+        setLoading(false);
+      }
     }
-  }, [currentWeekStart, employees, mounted, preferences]);
 
-  // Save to localStorage when data changes
-  useEffect(() => {
-    if (!mounted) return;
-    saveToLocalStorage("employees", employees);
-  }, [employees, mounted]);
+    loadData();
+  }, []);
 
+  // Load schedule from database when week or employees change
   useEffect(() => {
-    if (!mounted) return;
-    saveToLocalStorage("preferences", preferences);
-  }, [preferences, mounted]);
+    if (!mounted || employees.length === 0) return;
 
-  useEffect(() => {
-    if (!mounted || !schedule) return;
-    const scheduleKey = `schedule_${
-      currentWeekStart.toISOString().split("T")[0]
-    }`;
-    saveToLocalStorage(scheduleKey, schedule);
+    async function loadSchedule() {
+      const weekStart = currentWeekStart.toISOString().split("T")[0];
+
+      try {
+        const res = await fetch(`/api/schedule?weekStart=${weekStart}`);
+        const savedSchedule = await res.json();
+
+        if (savedSchedule && savedSchedule.weekStart) {
+          setSchedule(savedSchedule);
+        } else {
+          // Generate new schedule
+          const newSchedule = generateWeekSchedule(
+            currentWeekStart,
+            employees,
+            undefined,
+            preferences
+          );
+          setSchedule(newSchedule);
+
+          // Save to database
+          await fetch("/api/schedule", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ weekStart, schedule: newSchedule }),
+          });
+        }
+      } catch (error) {
+        console.error("Error loading schedule:", error);
+      }
+    }
+
+    loadSchedule();
   }, [schedule, currentWeekStart, mounted]);
 
   const handleUpdateEmployees = (updatedEmployees: Employee[]) => {
@@ -97,7 +126,7 @@ export default function Home() {
     setCurrentWeekStart(newWeekStart);
   };
 
-  const handleToggleDayOff = (
+  const handleToggleDayOff = async (
     date: string,
     employeeId: string,
     isOff: boolean
@@ -113,9 +142,17 @@ export default function Home() {
       preferences
     );
     setSchedule(updatedSchedule);
+
+    // Save to database
+    const weekStart = currentWeekStart.toISOString().split("T")[0];
+    await fetch("/api/schedule", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ weekStart, schedule: updatedSchedule }),
+    });
   };
 
-  const handleUpdateShift = (
+  const handleUpdateShift = async (
     date: string,
     shiftType: "ca1" | "ca2",
     employeeIds: string[]
@@ -129,9 +166,17 @@ export default function Home() {
       employeeIds
     );
     setSchedule(updatedSchedule);
+
+    // Save to database
+    const weekStart = currentWeekStart.toISOString().split("T")[0];
+    await fetch("/api/schedule", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ weekStart, schedule: updatedSchedule }),
+    });
   };
 
-  const handleRegenerateSchedule = () => {
+  const handleRegenerateSchedule = async () => {
     const newSchedule = generateWeekSchedule(
       currentWeekStart,
       employees,
@@ -139,10 +184,14 @@ export default function Home() {
       preferences
     );
     setSchedule(newSchedule);
-    const scheduleKey = `schedule_${
-      currentWeekStart.toISOString().split("T")[0]
-    }`;
-    saveToLocalStorage(scheduleKey, newSchedule);
+
+    // Save to database
+    const weekStart = currentWeekStart.toISOString().split("T")[0];
+    await fetch("/api/schedule", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ weekStart, schedule: newSchedule }),
+    });
   };
 
   if (!mounted || !schedule) {

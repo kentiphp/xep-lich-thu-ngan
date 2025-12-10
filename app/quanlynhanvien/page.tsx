@@ -2,50 +2,87 @@
 
 import { useState, useEffect } from "react";
 import { Employee, EmployeePreferences } from "@/types";
-import {
-  getDefaultEmployees,
-  saveToLocalStorage,
-  loadFromLocalStorage,
-} from "@/lib/schedule";
+import { getDefaultEmployees } from "@/lib/schedule";
 import EmployeeManager from "@/components/EmployeeManager";
 import ShiftPreferenceManager from "@/components/ShiftPreferenceManager";
 import Link from "next/link";
 
 export default function QuanLyNhanVienPage() {
-  const [employees, setEmployees] = useState<Employee[]>(() =>
-    typeof window !== "undefined"
-      ? loadFromLocalStorage<Employee[]>("employees", getDefaultEmployees())
-      : getDefaultEmployees()
-  );
-  const [preferences, setPreferences] = useState<EmployeePreferences[]>(() =>
-    typeof window !== "undefined"
-      ? loadFromLocalStorage<EmployeePreferences[]>("preferences", [])
-      : []
-  );
-  const mounted = true; // Always mounted on client
+  const [employees, setEmployees] = useState<Employee[]>([]);
+  const [preferences, setPreferences] = useState<EmployeePreferences[]>([]);
+  const [mounted, setMounted] = useState(false);
+  const [loading, setLoading] = useState(true);
 
-  // Save to localStorage when data changes
+  // Load data from database
   useEffect(() => {
-    if (!mounted) return;
-    saveToLocalStorage("employees", employees);
-  }, [employees, mounted]);
+    async function loadData() {
+      try {
+        setLoading(true);
 
-  useEffect(() => {
-    if (!mounted) return;
-    saveToLocalStorage("preferences", preferences);
-  }, [preferences, mounted]);
+        // Fetch employees
+        const empRes = await fetch("/api/employees");
+        const empData = await empRes.json();
+        if (Array.isArray(empData) && empData.length > 0) {
+          setEmployees(empData);
+        } else {
+          setEmployees(getDefaultEmployees());
+        }
 
-  const handleUpdateEmployees = (updatedEmployees: Employee[]) => {
+        // Fetch preferences
+        const prefRes = await fetch("/api/preferences");
+        const prefData = await prefRes.json();
+        if (Array.isArray(prefData)) {
+          setPreferences(prefData);
+        }
+
+        setMounted(true);
+      } catch (error) {
+        console.error("Error loading data:", error);
+        setEmployees(getDefaultEmployees());
+        setMounted(true);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    loadData();
+  }, []);
+
+  const handleUpdateEmployees = async (updatedEmployees: Employee[]) => {
     setEmployees(updatedEmployees);
+
+    // Save all employees to database
+    try {
+      for (const emp of updatedEmployees) {
+        await fetch("/api/employees", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(emp),
+        });
+      }
+    } catch (error) {
+      console.error("Error saving employees:", error);
+    }
   };
 
-  const handleUpdatePreferences = (
+  const handleUpdatePreferences = async (
     updatedPreferences: EmployeePreferences[]
   ) => {
     setPreferences(updatedPreferences);
+
+    // Save preferences to database
+    try {
+      await fetch("/api/preferences", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(updatedPreferences),
+      });
+    } catch (error) {
+      console.error("Error saving preferences:", error);
+    }
   };
 
-  if (!mounted) {
+  if (loading || !mounted) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center">
         <div className="text-xl text-gray-600">Đang tải...</div>
