@@ -2,6 +2,7 @@
   "name": "xep-lich-thu-ngan",
   "version": "0.1.0",
   "private": true,
+  "author": "IT-TTC",
   "scripts": {
     "dev": "next dev",
     "build": "next build",

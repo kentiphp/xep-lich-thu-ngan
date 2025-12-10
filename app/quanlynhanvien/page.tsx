@@ -139,6 +139,11 @@ export default function QuanLyNhanVienPage() {
             </Link>
           </div>
         </div>
+
+        {/* Footer */}
+        <footer className="mt-8 text-center text-sm text-gray-600">
+          <p>© 2025 IT-TTC - Hệ thống xếp lịch thu ngân</p>
+        </footer>
       </div>
     </div>
   );
