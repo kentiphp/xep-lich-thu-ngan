@@ -13,6 +13,12 @@ const eslintConfig = defineConfig([
     "build/**",
     "next-env.d.ts",
   ]),
+  {
+    rules: {
+      // Disable false positive rule về bg-gradient-to
+      "@next/next/no-unknown-tailwind-class": "off",
+    },
+  },
 ]);
 
 export default eslintConfig;
