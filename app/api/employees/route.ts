@@ -28,10 +28,18 @@ export async function POST(request: Request) {
 
 export async function DELETE(request: Request) {
   try {
-    const { id } = await request.json();
+    const { searchParams } = new URL(request.url);
+    const id = searchParams.get("id");
+    if (!id) {
+      return NextResponse.json(
+        { error: "Employee ID is required" },
+        { status: 400 }
+      );
+    }
     await deleteEmployee(id);
     return NextResponse.json({ success: true });
   } catch (error) {
+    console.error("Delete employee error:", error);
     return NextResponse.json(
       { error: "Failed to delete employee" },
       { status: 500 }
