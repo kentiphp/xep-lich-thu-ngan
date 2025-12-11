@@ -27,7 +27,7 @@ export interface Employee {
   id: string;
   name: string;
   color: string; // màu hiển thị trên lịch
-  isBackup?: boolean; // nhân viên trám ca - chỉ xếp khi cần thiết
+  canWorkAlone?: boolean; // nhân viên đủ điều kiện đứng 1 mình 1 ca
 }
 
 // Lịch làm việc của một ca

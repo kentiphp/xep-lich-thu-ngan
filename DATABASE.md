@@ -7,6 +7,7 @@
 ### Database Schema
 
 #### 1. `employees` Table
+
 ```sql
 CREATE TABLE employees (
   id TEXT PRIMARY KEY,
@@ -18,6 +19,7 @@ CREATE TABLE employees (
 ```
 
 #### 2. `preferences` Table
+
 ```sql
 CREATE TABLE preferences (
   id SERIAL PRIMARY KEY,
@@ -30,6 +32,7 @@ CREATE TABLE preferences (
 ```
 
 #### 3. `schedules` Table
+
 ```sql
 CREATE TABLE schedules (
   id SERIAL PRIMARY KEY,
@@ -44,19 +47,23 @@ CREATE TABLE schedules (
 ### API Endpoints
 
 #### Employees
+
 - `GET /api/employees` - Lấy danh sách nhân viên
 - `POST /api/employees` - Thêm/cập nhật nhân viên
 - `DELETE /api/employees?id={id}` - Xóa nhân viên
 
 #### Preferences
+
 - `GET /api/preferences` - Lấy preferences của tất cả nhân viên
 - `POST /api/preferences` - Lưu preferences (bulk update)
 
 #### Schedules
+
 - `GET /api/schedule?weekStart={date}` - Lấy lịch của tuần
 - `POST /api/schedule` - Lưu lịch tuần
 
 #### Initialization
+
 - `GET /api/init` - Khởi tạo database tables (chỉ cần gọi 1 lần)
 
 ### Environment Variables
@@ -73,6 +80,7 @@ Các biến này được tự động tạo khi kết nối Vercel project vớ
 ### Local Development
 
 1. **Pull environment variables từ Vercel:**
+
    ```bash
    vercel env pull
    ```
@@ -104,16 +112,19 @@ Nếu bạn đang nâng cấp từ phiên bản cũ dùng localStorage:
 ### Troubleshooting
 
 **Lỗi: "Failed to fetch employees"**
+
 - Kiểm tra environment variables đã được cấu hình chưa
 - Verify database connection string đúng
 - Đảm bảo đã gọi `/api/init` để tạo tables
 
 **Dữ liệu không được lưu**
+
 - Mở DevTools Console để xem lỗi API
 - Kiểm tra Network tab để thấy API calls
 - Verify rằng không còn dùng localStorage
 
 **Test database connection:**
+
 ```bash
 # Thêm nhân viên test
 curl -X POST http://localhost:3000/api/employees \

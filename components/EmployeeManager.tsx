@@ -162,9 +162,9 @@ export default function EmployeeManager({
                   <span className="font-medium text-gray-700">
                     {employee.name}
                   </span>
-                  {employee.isBackup && (
-                    <span className="px-2 py-1 text-xs bg-orange-100 text-orange-700 rounded-full font-medium">
-                      🔧 Trám ca
+                  {employee.canWorkAlone && (
+                    <span className="px-2 py-1 text-xs bg-green-100 text-green-700 rounded-full font-medium">
+                      ✅ Đủ điều kiện
                     </span>
                   )}
                 </div>
@@ -188,22 +188,22 @@ export default function EmployeeManager({
                 </>
               ) : (
                 <>
-                  <label className="flex items-center gap-2 px-3 py-1 bg-orange-50 border border-orange-200 rounded cursor-pointer hover:bg-orange-100 transition">
+                  <label className="flex items-center gap-2 px-3 py-1 bg-green-50 border border-green-200 rounded cursor-pointer hover:bg-green-100 transition">
                     <input
                       type="checkbox"
-                      checked={employee.isBackup || false}
+                      checked={employee.canWorkAlone || false}
                       onChange={(e) => {
                         const updated = employees.map((emp) =>
                           emp.id === employee.id
-                            ? { ...emp, isBackup: e.target.checked }
+                            ? { ...emp, canWorkAlone: e.target.checked }
                             : emp
                         );
                         onUpdateEmployees(updated);
                       }}
                       className="w-4 h-4"
                     />
-                    <span className="text-sm text-orange-700 font-medium">
-                      Trám ca
+                    <span className="text-sm text-green-700 font-medium">
+                      Đủ điều kiện 1 mình
                     </span>
                   </label>
                   <button

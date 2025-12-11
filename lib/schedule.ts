@@ -9,8 +9,8 @@ import {
 
 // Lấy danh sách nhân viên mặc định
 export const getDefaultEmployees = (): Employee[] => [
-  { id: "1", name: "Nhân viên 1", color: "#3b82f6" },
-  { id: "2", name: "Nhân viên 2", color: "#10b981" },
+  { id: "1", name: "Nhân viên 1", color: "#3b82f6", canWorkAlone: true },
+  { id: "2", name: "Nhân viên 2", color: "#10b981", canWorkAlone: false },
 ];
 
 // Lấy ngày đầu tuần (thứ 2)
@@ -98,44 +98,13 @@ export const generateDaySchedule = (
   }
 
   const availableEmployees = employees.filter((e) => !dayOff.includes(e.id));
-  const hasEmployeeOff = dayOff.length > 0;
 
   // Xếp lịch cho 2 ca
-  let assignedShifts = assignEmployeesToBothShifts(
+  const assignedShifts = assignEmployeesToBothShifts(
     availableEmployees,
     dayOfWeek,
     preferences
   );
-
-  // TRƯỜNG HỢP ĐẶC BIỆT: Có người nghỉ và thiếu người
-  // Nếu 1 ca thiếu người (length = 0), buộc người còn lại phải làm full
-  if (hasEmployeeOff) {
-    const regularEmployees = availableEmployees.filter((e) => !e.isBackup);
-
-    // Nếu chỉ còn 1 nhân viên thường và 1 trong 2 ca thiếu người
-    if (regularEmployees.length === 1) {
-      const employeeId = regularEmployees[0].id;
-      assignedShifts = {
-        ca1: [employeeId],
-        ca2: [employeeId],
-      };
-    }
-    // Nếu cả 2 ca đều thiếu người (không có nhân viên thường)
-    else if (
-      assignedShifts.ca1.length === 0 ||
-      assignedShifts.ca2.length === 0
-    ) {
-      // Nếu có nhân viên backup và 1 ca thiếu người, bắt backup làm full
-      const backupEmployees = availableEmployees.filter((e) => e.isBackup);
-      if (backupEmployees.length === 1 && regularEmployees.length === 0) {
-        const employeeId = backupEmployees[0].id;
-        assignedShifts = {
-          ca1: [employeeId],
-          ca2: [employeeId],
-        };
-      }
-    }
-  }
 
   const shifts: ShiftAssignment[] = [
     {
@@ -158,8 +127,8 @@ export const generateDaySchedule = (
 // Xếp nhân viên cho cả 2 ca cùng lúc
 // QUY TẮC MỚI:
 // 1. Mỗi ca ít nhất 1 người
-// 2. Mỗi nhân viên làm 1 ca/ngày (trừ trường hợp thiếu người do nghỉ)
-// 3. Nhân viên trám ca chỉ điền vào ca thiếu người
+// 2. Mỗi nhân viên làm 1 ca/ngày
+// 3. Nhân viên chưa đủ điều kiện phải làm chung với nhân viên đủ điều kiện
 const assignEmployeesToBothShifts = (
   availableEmployees: Employee[],
   dayOfWeek?: number,
@@ -169,98 +138,167 @@ const assignEmployeesToBothShifts = (
     return { ca1: [], ca2: [] };
   }
 
-  // Tách nhân viên backup và nhân viên thường
-  const backupEmployees = availableEmployees.filter((e) => e.isBackup);
-  const regularEmployees = availableEmployees.filter((e) => !e.isBackup);
+  // Phân loại nhân viên theo khả năng
+  const canWorkAlone = availableEmployees.filter((e) => e.canWorkAlone);
+  const needSupervision = availableEmployees.filter((e) => !e.canWorkAlone);
 
   const ca1Employees: string[] = [];
   const ca2Employees: string[] = [];
   const usedEmployeeIds = new Set<string>();
 
-  // BƯỚC 1: Phân loại nhân viên thường theo preferences
-  const morningPreferred: Employee[] = [];
-  const eveningPreferred: Employee[] = [];
-  const flexibleEmployees: Employee[] = [];
+  // Hàm helper: Lấy preference của nhân viên cho ngày này
+  const getPreference = (empId: string): string => {
+    if (!preferences || dayOfWeek === undefined) return "any";
+    const empPref = preferences.find((p) => p.employeeId === empId);
+    const dayPref = empPref?.preferences.find((p) => p.dayOfWeek === dayOfWeek);
+    return dayPref?.preference || "any";
+  };
 
-  regularEmployees.forEach((emp) => {
-    if (preferences && dayOfWeek !== undefined) {
-      const empPref = preferences.find((p) => p.employeeId === emp.id);
-      const dayPref = empPref?.preferences.find(
-        (p) => p.dayOfWeek === dayOfWeek
-      );
+  // Phân loại theo preference
+  const canAloneMorning = canWorkAlone.filter(
+    (e) => getPreference(e.id) === "morning"
+  );
+  const canAloneEvening = canWorkAlone.filter(
+    (e) => getPreference(e.id) === "evening"
+  );
+  const canAloneFlexible = canWorkAlone.filter(
+    (e) => getPreference(e.id) === "any"
+  );
 
-      if (dayPref?.preference === "morning") {
-        morningPreferred.push(emp);
-      } else if (dayPref?.preference === "evening") {
-        eveningPreferred.push(emp);
-      } else {
-        flexibleEmployees.push(emp);
-      }
-    } else {
-      flexibleEmployees.push(emp);
-    }
-  });
+  const needSupMorning = needSupervision.filter(
+    (e) => getPreference(e.id) === "morning"
+  );
+  const needSupEvening = needSupervision.filter(
+    (e) => getPreference(e.id) === "evening"
+  );
+  const needSupFlexible = needSupervision.filter(
+    (e) => getPreference(e.id) === "any"
+  );
 
-  // BƯỚC 2: Xếp Ca 1 (Sáng)
-  // Ưu tiên: người muốn ca sáng > flexible
-  if (morningPreferred.length > 0) {
-    ca1Employees.push(morningPreferred[0].id);
-    usedEmployeeIds.add(morningPreferred[0].id);
-  } else if (flexibleEmployees.length > 0) {
-    ca1Employees.push(flexibleEmployees[0].id);
-    usedEmployeeIds.add(flexibleEmployees[0].id);
+  // BƯỚC 1: Xếp Ca 1 (Sáng)
+  // Ưu tiên: người đủ điều kiện + muốn ca sáng
+  let ca1Qualified: Employee | null = null;
+
+  if (canAloneMorning.length > 0) {
+    ca1Qualified = canAloneMorning[0];
+  } else if (canAloneFlexible.length > 0) {
+    ca1Qualified = canAloneFlexible[0];
+  } else if (canAloneEvening.length > 0) {
+    ca1Qualified = canAloneEvening[0];
   }
 
-  // BƯỚC 3: Xếp Ca 2 (Tối)
-  // Ưu tiên: người muốn ca tối > người muốn ca sáng còn lại > flexible còn lại
+  if (ca1Qualified) {
+    ca1Employees.push(ca1Qualified.id);
+    usedEmployeeIds.add(ca1Qualified.id);
 
-  // 3a. Thử người muốn ca tối trước
-  const availableEveningPref = eveningPreferred.filter(
+    // Nếu có người chưa đủ điều kiện + muốn ca sáng, ghép cặp
+    if (needSupMorning.length > 0) {
+      ca1Employees.push(needSupMorning[0].id);
+      usedEmployeeIds.add(needSupMorning[0].id);
+    } else if (needSupFlexible.length > 0) {
+      ca1Employees.push(needSupFlexible[0].id);
+      usedEmployeeIds.add(needSupFlexible[0].id);
+    }
+  } else {
+    // Không có người đủ điều kiện, phải ghép 2 người chưa đủ điều kiện
+    if (needSupMorning.length > 0) {
+      ca1Employees.push(needSupMorning[0].id);
+      usedEmployeeIds.add(needSupMorning[0].id);
+    } else if (needSupFlexible.length > 0) {
+      ca1Employees.push(needSupFlexible[0].id);
+      usedEmployeeIds.add(needSupFlexible[0].id);
+    } else if (needSupEvening.length > 0) {
+      ca1Employees.push(needSupEvening[0].id);
+      usedEmployeeIds.add(needSupEvening[0].id);
+    }
+
+    // Thêm người thứ 2 nếu có
+    const remaining = needSupervision.filter((e) => !usedEmployeeIds.has(e.id));
+    if (ca1Employees.length === 1 && remaining.length > 0) {
+      ca1Employees.push(remaining[0].id);
+      usedEmployeeIds.add(remaining[0].id);
+    }
+  }
+
+  // BƯỚC 2: Xếp Ca 2 (Tối)
+  // Lấy danh sách người còn lại
+  const remainingCanAlone = canWorkAlone.filter(
     (e) => !usedEmployeeIds.has(e.id)
   );
-  if (availableEveningPref.length > 0) {
-    ca2Employees.push(availableEveningPref[0].id);
-    usedEmployeeIds.add(availableEveningPref[0].id);
+  const remainingNeedSup = needSupervision.filter(
+    (e) => !usedEmployeeIds.has(e.id)
+  );
+
+  let ca2Qualified: Employee | null = null;
+
+  // Ưu tiên người đủ điều kiện + muốn ca tối
+  const remainingCanAloneEvening = remainingCanAlone.filter(
+    (e) => getPreference(e.id) === "evening"
+  );
+  const remainingCanAloneFlexible = remainingCanAlone.filter(
+    (e) => getPreference(e.id) === "any"
+  );
+  const remainingCanAloneMorning = remainingCanAlone.filter(
+    (e) => getPreference(e.id) === "morning"
+  );
+
+  if (remainingCanAloneEvening.length > 0) {
+    ca2Qualified = remainingCanAloneEvening[0];
+  } else if (remainingCanAloneFlexible.length > 0) {
+    ca2Qualified = remainingCanAloneFlexible[0];
+  } else if (remainingCanAloneMorning.length > 0) {
+    ca2Qualified = remainingCanAloneMorning[0];
+  }
+
+  if (ca2Qualified) {
+    ca2Employees.push(ca2Qualified.id);
+    usedEmployeeIds.add(ca2Qualified.id);
+
+    // Ghép với người chưa đủ điều kiện nếu có
+    const remainingNeedSupEvening = remainingNeedSup.filter(
+      (e) => getPreference(e.id) === "evening"
+    );
+    const remainingNeedSupFlexible = remainingNeedSup.filter(
+      (e) => getPreference(e.id) === "any"
+    );
+
+    if (remainingNeedSupEvening.length > 0) {
+      ca2Employees.push(remainingNeedSupEvening[0].id);
+      usedEmployeeIds.add(remainingNeedSupEvening[0].id);
+    } else if (remainingNeedSupFlexible.length > 0) {
+      ca2Employees.push(remainingNeedSupFlexible[0].id);
+      usedEmployeeIds.add(remainingNeedSupFlexible[0].id);
+    }
   } else {
-    // 3b. Thử người muốn ca sáng còn lại
-    const availableMorningPref = morningPreferred.filter(
-      (e) => !usedEmployeeIds.has(e.id)
+    // Không có người đủ điều kiện, xếp người chưa đủ điều kiện
+    const remainingNeedSupEvening = remainingNeedSup.filter(
+      (e) => getPreference(e.id) === "evening"
     );
-    if (availableMorningPref.length > 0) {
-      ca2Employees.push(availableMorningPref[0].id);
-      usedEmployeeIds.add(availableMorningPref[0].id);
-    } else {
-      // 3c. Thử flexible còn lại
-      const availableFlexible = flexibleEmployees.filter(
-        (e) => !usedEmployeeIds.has(e.id)
-      );
-      if (availableFlexible.length > 0) {
-        ca2Employees.push(availableFlexible[0].id);
-        usedEmployeeIds.add(availableFlexible[0].id);
-      }
-    }
-  }
+    const remainingNeedSupFlexible = remainingNeedSup.filter(
+      (e) => getPreference(e.id) === "any"
+    );
+    const remainingNeedSupMorning = remainingNeedSup.filter(
+      (e) => getPreference(e.id) === "morning"
+    );
 
-  // BƯỚC 4: Kiểm tra và điền nhân viên trám ca nếu thiếu
-  // Ca 1 thiếu người
-  if (ca1Employees.length === 0 && backupEmployees.length > 0) {
-    const availableBackup = backupEmployees.find(
-      (e) => !usedEmployeeIds.has(e.id)
-    );
-    if (availableBackup) {
-      ca1Employees.push(availableBackup.id);
-      usedEmployeeIds.add(availableBackup.id);
+    if (remainingNeedSupEvening.length > 0) {
+      ca2Employees.push(remainingNeedSupEvening[0].id);
+      usedEmployeeIds.add(remainingNeedSupEvening[0].id);
+    } else if (remainingNeedSupFlexible.length > 0) {
+      ca2Employees.push(remainingNeedSupFlexible[0].id);
+      usedEmployeeIds.add(remainingNeedSupFlexible[0].id);
+    } else if (remainingNeedSupMorning.length > 0) {
+      ca2Employees.push(remainingNeedSupMorning[0].id);
+      usedEmployeeIds.add(remainingNeedSupMorning[0].id);
     }
-  }
 
-  // Ca 2 thiếu người
-  if (ca2Employees.length === 0 && backupEmployees.length > 0) {
-    const availableBackup = backupEmployees.find(
+    // Thêm người thứ 2 nếu cần
+    const stillRemaining = remainingNeedSup.filter(
       (e) => !usedEmployeeIds.has(e.id)
     );
-    if (availableBackup) {
-      ca2Employees.push(availableBackup.id);
-      usedEmployeeIds.add(availableBackup.id);
+    if (ca2Employees.length === 1 && stillRemaining.length > 0) {
+      ca2Employees.push(stillRemaining[0].id);
+      usedEmployeeIds.add(stillRemaining[0].id);
     }
   }
 

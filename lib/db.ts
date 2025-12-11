@@ -10,7 +10,7 @@ export async function initDatabase() {
         id TEXT PRIMARY KEY,
         name TEXT NOT NULL,
         color TEXT NOT NULL,
-        is_backup BOOLEAN DEFAULT FALSE,
+        can_work_alone BOOLEAN DEFAULT FALSE,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )
     `;
@@ -53,7 +53,7 @@ export async function getEmployees(): Promise<Employee[]> {
       id: row.id,
       name: row.name,
       color: row.color,
-      isBackup: row.is_backup || false,
+      canWorkAlone: row.can_work_alone || false,
     }));
   } catch (error) {
     console.error("Error getting employees:", error);
@@ -64,14 +64,14 @@ export async function getEmployees(): Promise<Employee[]> {
 export async function saveEmployee(employee: Employee): Promise<void> {
   try {
     await sql`
-      INSERT INTO employees (id, name, color, is_backup)
+      INSERT INTO employees (id, name, color, can_work_alone)
       VALUES (${employee.id}, ${employee.name}, ${employee.color}, ${
-      employee.isBackup || false
+      employee.canWorkAlone || false
     })
       ON CONFLICT (id) 
       DO UPDATE SET name = ${employee.name}, color = ${
       employee.color
-    }, is_backup = ${employee.isBackup || false}
+    }, can_work_alone = ${employee.canWorkAlone || false}
     `;
   } catch (error) {
     console.error("Error saving employee:", error);
