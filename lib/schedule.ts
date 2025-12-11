@@ -106,18 +106,136 @@ export const generateDaySchedule = (
     preferences
   );
 
-  // TRƯỜNG HỢP ĐẶC BIỆT: Thiếu người và chỉ còn 1 người đủ điều kiện
-  // Nếu 1 ca thiếu người và chỉ có 1 người đủ điều kiện, người đó phải làm full 2 ca
+  // KIỂM TRA VÀ SỬA CÁC TRƯỜNG HỢP VI PHẠM QUY TẮC
   const qualifiedEmployees = availableEmployees.filter((e) => e.canWorkAlone);
-  
-  if (qualifiedEmployees.length === 1 && 
-      (assignedShifts.ca1.length === 0 || assignedShifts.ca2.length === 0)) {
+  const unqualifiedEmployees = availableEmployees.filter(
+    (e) => !e.canWorkAlone
+  );
+
+  // Hàm kiểm tra xem ca có hợp lệ không
+  const isShiftValid = (shiftEmployees: string[]): boolean => {
+    if (shiftEmployees.length === 0) return false; // Ca trống
+
+    // Nếu ca chỉ có 1 người
+    if (shiftEmployees.length === 1) {
+      const emp = availableEmployees.find((e) => e.id === shiftEmployees[0]);
+      // Người đó phải đủ điều kiện
+      return emp?.canWorkAlone === true;
+    }
+
+    // Nếu ca có 2+ người
+    if (shiftEmployees.length >= 2) {
+      // Phải có ít nhất 1 người đủ điều kiện
+      return shiftEmployees.some((id) => {
+        const emp = availableEmployees.find((e) => e.id === id);
+        return emp?.canWorkAlone === true;
+      });
+    }
+
+    return true;
+  };
+
+  const ca1Valid = isShiftValid(assignedShifts.ca1);
+  const ca2Valid = isShiftValid(assignedShifts.ca2);
+
+  // Nếu cả 2 ca đều hợp lệ → OK
+  if (ca1Valid && ca2Valid) {
+    // Không làm gì
+  }
+  // Nếu có ca không hợp lệ và chỉ có 1 người đủ điều kiện
+  else if (qualifiedEmployees.length === 1 && (!ca1Valid || !ca2Valid)) {
     const qualifiedId = qualifiedEmployees[0].id;
-    // Nếu 1 trong 2 ca thiếu người đủ điều kiện, bắt người đủ điều kiện làm full
+    // Người đủ điều kiện phải làm full 2 ca
     assignedShifts = {
       ca1: [qualifiedId],
       ca2: [qualifiedId],
     };
+  }
+  // Nếu có nhiều người đủ điều kiện nhưng ca không hợp lệ
+  else if (qualifiedEmployees.length >= 2) {
+    // Ca 1 không hợp lệ
+    if (!ca1Valid) {
+      if (assignedShifts.ca1.length === 0) {
+        // Ca trống → Thêm người đủ điều kiện chưa làm
+        const availableQualified = qualifiedEmployees.find(
+          (e) => !assignedShifts.ca2.includes(e.id)
+        );
+        if (availableQualified) {
+          assignedShifts.ca1 = [availableQualified.id];
+        } else {
+          // Tất cả người đủ DK đã làm ca 2 → Lấy 1 người làm full
+          assignedShifts.ca1 = [qualifiedEmployees[0].id];
+        }
+      } else {
+        // Ca có người nhưng không có người đủ DK → Thêm người đủ DK
+        const availableQualified = qualifiedEmployees.find(
+          (e) =>
+            !assignedShifts.ca1.includes(e.id) &&
+            !assignedShifts.ca2.includes(e.id)
+        );
+        if (availableQualified) {
+          assignedShifts.ca1.push(availableQualified.id);
+        } else {
+          // Không còn người đủ DK → Lấy người đã làm ca 2
+          const qualifiedInCa2 = qualifiedEmployees.find((e) =>
+            assignedShifts.ca2.includes(e.id)
+          );
+          if (qualifiedInCa2) {
+            assignedShifts.ca1.push(qualifiedInCa2.id);
+          }
+        }
+      }
+    }
+
+    // Ca 2 không hợp lệ
+    if (!ca2Valid) {
+      if (assignedShifts.ca2.length === 0) {
+        // Ca trống → Thêm người đủ điều kiện chưa làm
+        const availableQualified = qualifiedEmployees.find(
+          (e) => !assignedShifts.ca1.includes(e.id)
+        );
+        if (availableQualified) {
+          assignedShifts.ca2 = [availableQualified.id];
+        } else {
+          // Tất cả người đủ DK đã làm ca 1 → Lấy 1 người làm full
+          assignedShifts.ca2 = [qualifiedEmployees[0].id];
+        }
+      } else {
+        // Ca có người nhưng không có người đủ DK → Thêm người đủ DK
+        const availableQualified = qualifiedEmployees.find(
+          (e) =>
+            !assignedShifts.ca1.includes(e.id) &&
+            !assignedShifts.ca2.includes(e.id)
+        );
+        if (availableQualified) {
+          assignedShifts.ca2.push(availableQualified.id);
+        } else {
+          // Không còn người đủ DK → Lấy người đã làm ca 1
+          const qualifiedInCa1 = qualifiedEmployees.find((e) =>
+            assignedShifts.ca1.includes(e.id)
+          );
+          if (qualifiedInCa1) {
+            assignedShifts.ca2.push(qualifiedInCa1.id);
+          }
+        }
+      }
+    }
+  }
+  // Trường hợp không có người đủ điều kiện
+  else if (qualifiedEmployees.length === 0) {
+    // Ghép tất cả người chưa đủ DK vào cả 2 ca
+    if (unqualifiedEmployees.length >= 2) {
+      assignedShifts = {
+        ca1: [unqualifiedEmployees[0].id, unqualifiedEmployees[1].id],
+        ca2: unqualifiedEmployees.slice(1).map((e) => e.id),
+      };
+    } else if (unqualifiedEmployees.length === 1) {
+      // Chỉ có 1 người chưa đủ DK → Không thể xếp ca hợp lệ
+      assignedShifts = {
+        ca1: [unqualifiedEmployees[0].id],
+        ca2: [],
+      };
+    }
   }
 
   const shifts: ShiftAssignment[] = [
@@ -139,11 +257,13 @@ export const generateDaySchedule = (
 };
 
 // Xếp nhân viên cho cả 2 ca cùng lúc
-// QUY TẮC:
+// QUY TẮC QUAN TRỌNG:
 // 1. Mỗi ca ít nhất 1 người
-// 2. Mỗi nhân viên làm 1 ca/ngày (trừ khi thiếu người)
-// 3. Nhân viên chưa đủ điều kiện phải làm chung với nhân viên đủ điều kiện
-// 4. Nếu chỉ còn 1 người đủ điều kiện và thiếu người → Người đó làm full 2 ca
+// 2. Người CHƯA đủ điều kiện KHÔNG BAO GIỜ đứng ca một mình
+// 3. Nếu ca chỉ có 1 người → Người đó PHẢI đủ điều kiện
+// 4. Nếu ca có 2+ người → Phải có ít nhất 1 người đủ điều kiện
+// 5. Nếu thiếu người và người đủ DK đã làm ca 1 → Làm full cả 2 ca
+// 6. Ưu tiên theo preference (morning/evening/any)
 const assignEmployeesToBothShifts = (
   availableEmployees: Employee[],
   dayOfWeek?: number,
