@@ -326,13 +326,17 @@ const assignEmployeesToBothShifts = (
     ca1Employees.push(ca1Qualified.id);
     usedEmployeeIds.add(ca1Qualified.id);
 
-    // Nếu có người chưa đủ điều kiện + muốn ca sáng, ghép cặp
+    // Ghép thêm người chưa đủ điều kiện nếu có (ưu tiên theo preference)
     if (needSupMorning.length > 0) {
       ca1Employees.push(needSupMorning[0].id);
       usedEmployeeIds.add(needSupMorning[0].id);
     } else if (needSupFlexible.length > 0) {
       ca1Employees.push(needSupFlexible[0].id);
       usedEmployeeIds.add(needSupFlexible[0].id);
+    } else if (needSupEvening.length > 0 && needSupervision.length === 1) {
+      // Nếu chỉ có 1 người chưa đủ DK và prefer evening, vẫn ghép vào ca 1
+      ca1Employees.push(needSupEvening[0].id);
+      usedEmployeeIds.add(needSupEvening[0].id);
     }
   } else {
     // Không có người đủ điều kiện, phải ghép 2 người chưa đủ điều kiện
@@ -389,12 +393,15 @@ const assignEmployeesToBothShifts = (
     ca2Employees.push(ca2Qualified.id);
     usedEmployeeIds.add(ca2Qualified.id);
 
-    // Ghép với người chưa đủ điều kiện nếu có
+    // Ghép thêm người chưa đủ điều kiện nếu còn (ưu tiên preference)
     const remainingNeedSupEvening = remainingNeedSup.filter(
       (e) => getPreference(e.id) === "evening"
     );
     const remainingNeedSupFlexible = remainingNeedSup.filter(
       (e) => getPreference(e.id) === "any"
+    );
+    const remainingNeedSupMorning = remainingNeedSup.filter(
+      (e) => getPreference(e.id) === "morning"
     );
 
     if (remainingNeedSupEvening.length > 0) {
@@ -403,6 +410,10 @@ const assignEmployeesToBothShifts = (
     } else if (remainingNeedSupFlexible.length > 0) {
       ca2Employees.push(remainingNeedSupFlexible[0].id);
       usedEmployeeIds.add(remainingNeedSupFlexible[0].id);
+    } else if (remainingNeedSupMorning.length > 0) {
+      // Ghép luôn cả người prefer morning nếu không còn ai khác
+      ca2Employees.push(remainingNeedSupMorning[0].id);
+      usedEmployeeIds.add(remainingNeedSupMorning[0].id);
     }
   } else {
     // Không có người đủ điều kiện, xếp người chưa đủ điều kiện
