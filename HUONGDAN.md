@@ -13,9 +13,9 @@
 
 ### 👥 Quản lý nhân viên
 
-- Thêm/sửa thông tin 2 nhân viên
+- Thêm/sửa thông tin nhân viên
 - Mỗi nhân viên có màu riêng để dễ phân biệt trên lịch
-- Lưu trữ dữ liệu với localStorage
+- Lưu trữ dữ liệu trên Vercel Postgres database
 
 ### 📅 Xem và chỉnh sửa lịch
 
@@ -26,9 +26,10 @@
 
 ### 💾 Lưu trữ dữ liệu
 
-- Sử dụng localStorage để lưu trữ
-- Dữ liệu được tự động lưu khi thay đổi
+- Sử dụng Vercel Postgres (Neon) để lưu trữ
+- Dữ liệu được tự động đồng bộ với database khi thay đổi
 - Giữ lịch sử lịch làm việc cho từng tuần
+- Dữ liệu được bảo toàn ngay cả khi xóa cache trình duyệt
 
 ## 🚀 Cài đặt và chạy
 
@@ -80,7 +81,8 @@ xep-lich-thu-ngan/
 │   ├── WeekScheduleView.tsx    # Component hiển thị lịch tuần
 │   └── WeekNavigator.tsx       # Component điều hướng tuần
 ├── lib/
-│   └── schedule.ts      # Logic xếp lịch và localStorage
+│   ├── schedule.ts      # Logic xếp lịch
+│   └── db.ts            # Database operations (Vercel Postgres)
 ├── types/
 │   └── index.ts         # TypeScript type definitions
 └── package.json
@@ -92,7 +94,8 @@ xep-lich-thu-ngan/
 - **Language**: TypeScript
 - **Styling**: Tailwind CSS
 - **State Management**: React Hooks (useState, useEffect)
-- **Data Storage**: localStorage
+- **Data Storage**: Vercel Postgres (Neon)
+- **Database Client**: @vercel/postgres
 
 ## 📖 Hướng dẫn sử dụng
 
@@ -140,8 +143,8 @@ Bạn có thể dễ dàng tùy chỉnh logic trong file `lib/schedule.ts`:
 
 ## 📝 Ghi chú
 
-- Dữ liệu được lưu trong **localStorage** của trình duyệt
-- Xóa cache/localStorage sẽ **mất dữ liệu** đã lưu
+- Dữ liệu được lưu trong **Vercel Postgres database**
+- Dữ liệu được bảo toàn vĩnh viễn, không bị mất khi xóa cache
 - Ứng dụng hoạt động hoàn toàn ở **client-side**
 - Không cần database hoặc backend
 

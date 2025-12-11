@@ -158,16 +158,17 @@ export default function HelpGuide() {
                 <h3 className="text-lg font-semibold text-gray-800 mb-3 flex items-center gap-2">
                   💾 Lưu trữ dữ liệu
                 </h3>
-                <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                <div className="bg-green-50 border border-green-200 rounded-lg p-4">
                   <p className="text-gray-700 mb-2">
-                    ✓ Dữ liệu được <strong>tự động lưu</strong> vào trình duyệt
-                    (localStorage)
+                    ✓ Dữ liệu được <strong>tự động lưu</strong> vào Vercel
+                    Postgres database
                   </p>
                   <p className="text-gray-700 mb-2">
                     ✓ Mỗi tuần có lịch <strong>riêng biệt</strong> và độc lập
                   </p>
-                  <p className="text-orange-600 font-medium">
-                    ⚠️ Xóa cache trình duyệt sẽ mất dữ liệu đã lưu
+                  <p className="text-green-700 font-medium">
+                    ✓ Dữ liệu được bảo toàn vĩnh viễn, không bị mất khi xóa
+                    cache
                   </p>
                 </div>
               </section>

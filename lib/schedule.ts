@@ -336,25 +336,3 @@ export const updateShiftAssignment = (
     days: updatedDays,
   };
 };
-
-// Lưu vào localStorage
-export const saveToLocalStorage = (key: string, data: unknown) => {
-  if (typeof window !== "undefined") {
-    localStorage.setItem(key, JSON.stringify(data));
-  }
-};
-
-// Lấy từ localStorage
-export const loadFromLocalStorage = <T>(key: string, defaultValue: T): T => {
-  if (typeof window !== "undefined") {
-    const stored = localStorage.getItem(key);
-    if (stored) {
-      try {
-        return JSON.parse(stored);
-      } catch (e) {
-        console.error("Error parsing localStorage data:", e);
-      }
-    }
-  }
-  return defaultValue;
-};
