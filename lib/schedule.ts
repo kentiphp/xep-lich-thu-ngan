@@ -100,11 +100,25 @@ export const generateDaySchedule = (
   const availableEmployees = employees.filter((e) => !dayOff.includes(e.id));
 
   // Xếp lịch cho 2 ca
-  const assignedShifts = assignEmployeesToBothShifts(
+  let assignedShifts = assignEmployeesToBothShifts(
     availableEmployees,
     dayOfWeek,
     preferences
   );
+
+  // TRƯỜNG HỢP ĐẶC BIỆT: Thiếu người và chỉ còn 1 người đủ điều kiện
+  // Nếu 1 ca thiếu người và chỉ có 1 người đủ điều kiện, người đó phải làm full 2 ca
+  const qualifiedEmployees = availableEmployees.filter((e) => e.canWorkAlone);
+  
+  if (qualifiedEmployees.length === 1 && 
+      (assignedShifts.ca1.length === 0 || assignedShifts.ca2.length === 0)) {
+    const qualifiedId = qualifiedEmployees[0].id;
+    // Nếu 1 trong 2 ca thiếu người đủ điều kiện, bắt người đủ điều kiện làm full
+    assignedShifts = {
+      ca1: [qualifiedId],
+      ca2: [qualifiedId],
+    };
+  }
 
   const shifts: ShiftAssignment[] = [
     {
@@ -125,10 +139,11 @@ export const generateDaySchedule = (
 };
 
 // Xếp nhân viên cho cả 2 ca cùng lúc
-// QUY TẮC MỚI:
+// QUY TẮC:
 // 1. Mỗi ca ít nhất 1 người
-// 2. Mỗi nhân viên làm 1 ca/ngày
+// 2. Mỗi nhân viên làm 1 ca/ngày (trừ khi thiếu người)
 // 3. Nhân viên chưa đủ điều kiện phải làm chung với nhân viên đủ điều kiện
+// 4. Nếu chỉ còn 1 người đủ điều kiện và thiếu người → Người đó làm full 2 ca
 const assignEmployeesToBothShifts = (
   availableEmployees: Employee[],
   dayOfWeek?: number,
