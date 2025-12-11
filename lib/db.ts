@@ -108,7 +108,7 @@ export async function getPreferences(): Promise<EmployeePreferences[]> {
 
       preferencesMap.get(employeeId)!.preferences.push({
         dayOfWeek: row.day_of_week,
-        preference: row.preference as any,
+        preference: row.preference as "morning" | "evening" | "any" | "off",
       });
     });
 

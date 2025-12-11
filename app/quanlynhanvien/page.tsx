@@ -84,14 +84,14 @@ export default function QuanLyNhanVienPage() {
 
   if (loading || !mounted) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center">
+      <div className="min-h-screen bg-linear-to-br from-blue-50 to-indigo-100 flex items-center justify-center">
         <div className="text-xl text-gray-600">Đang tải...</div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 py-8 px-4">
+    <div className="min-h-screen bg-linear-to-br from-blue-50 to-indigo-100 py-8 px-4">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <header className="text-center mb-8">

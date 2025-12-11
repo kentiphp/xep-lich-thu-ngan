@@ -69,22 +69,22 @@ export default function HelpGuide() {
                   <li className="flex gap-2">
                     <span className="text-blue-600">•</span>
                     <span>
-                      Click nút <strong>"Sửa tên"</strong> để thay đổi tên nhân
-                      viên
+                      Click nút <strong>&ldquo;Sửa tên&rdquo;</strong> để thay
+                      đổi tên nhân viên
                     </span>
                   </li>
                   <li className="flex gap-2">
                     <span className="text-blue-600">•</span>
                     <span>
                       Nhập tên mới và nhấn <strong>Enter</strong> hoặc click{" "}
-                      <strong>"Lưu"</strong>
+                      <strong>&ldquo;Lưu&rdquo;</strong>
                     </span>
                   </li>
                   <li className="flex gap-2">
                     <span className="text-blue-600">•</span>
                     <span>
                       Nhấn <strong>Escape</strong> hoặc click{" "}
-                      <strong>"Hủy"</strong> để hủy
+                      <strong>&ldquo;Hủy&rdquo;</strong> để hủy
                     </span>
                   </li>
                 </ul>
@@ -106,14 +106,15 @@ export default function HelpGuide() {
                   <li className="flex gap-2">
                     <span className="text-green-600">•</span>
                     <span>
-                      Sử dụng nút <strong>"← Tuần trước"</strong> và{" "}
-                      <strong>"Tuần sau →"</strong> để điều hướng
+                      Sử dụng nút <strong>&ldquo;← Tuần trước&rdquo;</strong> và{" "}
+                      <strong>&ldquo;Tuần sau →&rdquo;</strong> để điều hướng
                     </span>
                   </li>
                   <li className="flex gap-2">
                     <span className="text-green-600">•</span>
                     <span>
-                      Click <strong>"Tuần này"</strong> để quay về tuần hiện tại
+                      Click <strong>&ldquo;Tuần này&rdquo;</strong> để quay về
+                      tuần hiện tại
                     </span>
                   </li>
                 </ul>
@@ -133,7 +134,7 @@ export default function HelpGuide() {
                     <span className="text-orange-600">•</span>
                     <span>
                       Click vào tên nhân viên trong phần{" "}
-                      <strong>"Đánh dấu nghỉ"</strong>
+                      <strong>&ldquo;Đánh dấu nghỉ&rdquo;</strong>
                     </span>
                   </li>
                   <li className="flex gap-2">

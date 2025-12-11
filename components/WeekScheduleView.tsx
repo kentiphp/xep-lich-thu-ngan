@@ -89,7 +89,6 @@ export default function WeekScheduleView({
           const hasEmptyShift = day.shifts.some(
             (s) => s.employees.length === 0
           );
-          const hasBothWarnings = hasEmployeeOff || hasEmptyShift;
 
           return (
             <div

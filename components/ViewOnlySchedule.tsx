@@ -1,6 +1,6 @@
 "use client";
 
-import { WeekSchedule, Employee, SHIFTS } from "@/types";
+import { WeekSchedule, Employee } from "@/types";
 import { parseDate } from "@/lib/schedule";
 
 interface ViewOnlyScheduleProps {
@@ -37,7 +37,7 @@ export default function ViewOnlySchedule({
 
   return (
     <div className="bg-white rounded-lg shadow-md overflow-hidden">
-      <div className="bg-gradient-to-r from-blue-600 to-indigo-600 p-6">
+      <div className="bg-linear-to-r from-blue-600 to-indigo-600 p-6">
         <h2 className="text-2xl font-bold text-white text-center">
           📅 Lịch làm việc tuần
         </h2>

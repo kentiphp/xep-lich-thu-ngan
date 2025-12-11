@@ -155,69 +155,70 @@ export const generateDaySchedule = (
     }
     // Nếu có nhiều người đủ điều kiện
     else if (qualifiedEmployees.length >= 2) {
-    // Ca 1 không hợp lệ
-    if (!ca1Valid) {
-      if (assignedShifts.ca1.length === 0) {
-        // Ca trống → Thêm người đủ điều kiện chưa làm
-        const availableQualified = qualifiedEmployees.find(
-          (e) => !assignedShifts.ca2.includes(e.id)
-        );
-        if (availableQualified) {
-          assignedShifts.ca1 = [availableQualified.id];
-        } else {
-          // Tất cả người đủ DK đã làm ca 2 → Lấy 1 người làm full
-          assignedShifts.ca1 = [qualifiedEmployees[0].id];
-        }
-      } else {
-        // Ca có người nhưng không có người đủ DK → Thêm người đủ DK
-        const availableQualified = qualifiedEmployees.find(
-          (e) =>
-            !assignedShifts.ca1.includes(e.id) &&
-            !assignedShifts.ca2.includes(e.id)
-        );
-        if (availableQualified) {
-          assignedShifts.ca1.push(availableQualified.id);
-        } else {
-          // Không còn người đủ DK → Lấy người đã làm ca 2
-          const qualifiedInCa2 = qualifiedEmployees.find((e) =>
-            assignedShifts.ca2.includes(e.id)
+      // Ca 1 không hợp lệ
+      if (!ca1Valid) {
+        if (assignedShifts.ca1.length === 0) {
+          // Ca trống → Thêm người đủ điều kiện chưa làm
+          const availableQualified = qualifiedEmployees.find(
+            (e) => !assignedShifts.ca2.includes(e.id)
           );
-          if (qualifiedInCa2) {
-            assignedShifts.ca1.push(qualifiedInCa2.id);
+          if (availableQualified) {
+            assignedShifts.ca1 = [availableQualified.id];
+          } else {
+            // Tất cả người đủ DK đã làm ca 2 → Lấy 1 người làm full
+            assignedShifts.ca1 = [qualifiedEmployees[0].id];
+          }
+        } else {
+          // Ca có người nhưng không có người đủ DK → Thêm người đủ DK
+          const availableQualified = qualifiedEmployees.find(
+            (e) =>
+              !assignedShifts.ca1.includes(e.id) &&
+              !assignedShifts.ca2.includes(e.id)
+          );
+          if (availableQualified) {
+            assignedShifts.ca1.push(availableQualified.id);
+          } else {
+            // Không còn người đủ DK → Lấy người đã làm ca 2
+            const qualifiedInCa2 = qualifiedEmployees.find((e) =>
+              assignedShifts.ca2.includes(e.id)
+            );
+            if (qualifiedInCa2) {
+              assignedShifts.ca1.push(qualifiedInCa2.id);
+            }
           }
         }
       }
-    }
 
-    // Ca 2 không hợp lệ
-    if (!ca2Valid) {
-      if (assignedShifts.ca2.length === 0) {
-        // Ca trống → Thêm người đủ điều kiện chưa làm
-        const availableQualified = qualifiedEmployees.find(
-          (e) => !assignedShifts.ca1.includes(e.id)
-        );
-        if (availableQualified) {
-          assignedShifts.ca2 = [availableQualified.id];
-        } else {
-          // Tất cả người đủ DK đã làm ca 1 → Lấy 1 người làm full
-          assignedShifts.ca2 = [qualifiedEmployees[0].id];
-        }
-      } else {
-        // Ca có người nhưng không có người đủ DK → Thêm người đủ DK
-        const availableQualified = qualifiedEmployees.find(
-          (e) =>
-            !assignedShifts.ca1.includes(e.id) &&
-            !assignedShifts.ca2.includes(e.id)
-        );
-        if (availableQualified) {
-          assignedShifts.ca2.push(availableQualified.id);
-        } else {
-          // Không còn người đủ DK → Lấy người đã làm ca 1
-          const qualifiedInCa1 = qualifiedEmployees.find((e) =>
-            assignedShifts.ca1.includes(e.id)
+      // Ca 2 không hợp lệ
+      if (!ca2Valid) {
+        if (assignedShifts.ca2.length === 0) {
+          // Ca trống → Thêm người đủ điều kiện chưa làm
+          const availableQualified = qualifiedEmployees.find(
+            (e) => !assignedShifts.ca1.includes(e.id)
           );
-          if (qualifiedInCa1) {
-            assignedShifts.ca2.push(qualifiedInCa1.id);
+          if (availableQualified) {
+            assignedShifts.ca2 = [availableQualified.id];
+          } else {
+            // Tất cả người đủ DK đã làm ca 1 → Lấy 1 người làm full
+            assignedShifts.ca2 = [qualifiedEmployees[0].id];
+          }
+        } else {
+          // Ca có người nhưng không có người đủ DK → Thêm người đủ DK
+          const availableQualified = qualifiedEmployees.find(
+            (e) =>
+              !assignedShifts.ca1.includes(e.id) &&
+              !assignedShifts.ca2.includes(e.id)
+          );
+          if (availableQualified) {
+            assignedShifts.ca2.push(availableQualified.id);
+          } else {
+            // Không còn người đủ DK → Lấy người đã làm ca 1
+            const qualifiedInCa1 = qualifiedEmployees.find((e) =>
+              assignedShifts.ca1.includes(e.id)
+            );
+            if (qualifiedInCa1) {
+              assignedShifts.ca2.push(qualifiedInCa1.id);
+            }
           }
         }
       }
@@ -336,10 +337,7 @@ const assignEmployeesToBothShifts = (
     );
 
     // Nếu còn người đủ DK khác cho ca 2, hoặc tổng chỉ có 2 người
-    if (
-      remainingQualified.length > 0 ||
-      availableEmployees.length <= 2
-    ) {
+    if (remainingQualified.length > 0 || availableEmployees.length <= 2) {
       // Ghép thêm người chưa đủ DK (ưu tiên theo preference)
       if (needSupMorning.length > 0) {
         ca1Employees.push(needSupMorning[0].id);

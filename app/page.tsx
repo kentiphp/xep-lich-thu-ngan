@@ -3,11 +3,11 @@
 import { useState, useEffect } from "react";
 import { Employee, WeekSchedule, EmployeePreferences } from "@/types";
 import {
-  getDefaultEmployees,
   getMonday,
   generateWeekSchedule,
   updateDayOff,
   updateShiftAssignment,
+  getDefaultEmployees,
 } from "@/lib/schedule";
 import WeekNavigator from "@/components/WeekNavigator";
 import ViewOnlySchedule from "@/components/ViewOnlySchedule";
@@ -23,14 +23,11 @@ export default function Home() {
   const [preferences, setPreferences] = useState<EmployeePreferences[]>([]);
   const [mounted, setMounted] = useState(false);
   const [viewMode, setViewMode] = useState<"simple" | "detailed">("simple");
-  const [loading, setLoading] = useState(true);
 
   // Load data from database
   useEffect(() => {
     async function loadData() {
       try {
-        setLoading(true);
-
         // Fetch employees
         const empRes = await fetch("/api/employees");
         const empData = await empRes.json();
@@ -62,8 +59,6 @@ export default function Home() {
         // Fallback to default data
         setEmployees(getDefaultEmployees());
         setMounted(true);
-      } finally {
-        setLoading(false);
       }
     }
 
@@ -106,21 +101,7 @@ export default function Home() {
     }
 
     loadSchedule();
-  }, [schedule, currentWeekStart, mounted]);
-
-  const handleUpdateEmployees = (updatedEmployees: Employee[]) => {
-    setEmployees(updatedEmployees);
-    // Regenerate schedule with new employee names
-    if (schedule) {
-      const newSchedule = generateWeekSchedule(
-        currentWeekStart,
-        updatedEmployees,
-        schedule,
-        preferences
-      );
-      setSchedule(newSchedule);
-    }
-  };
+  }, [currentWeekStart, mounted, employees, preferences]);
 
   const handleWeekChange = (newWeekStart: Date) => {
     setCurrentWeekStart(newWeekStart);
@@ -196,14 +177,14 @@ export default function Home() {
 
   if (!mounted || !schedule) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center">
+      <div className="min-h-screen bg-linear-to-br from-blue-50 to-indigo-100 flex items-center justify-center">
         <div className="text-xl text-gray-600">Đang tải...</div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 py-8 px-4">
+    <div className="min-h-screen bg-linear-to-br from-blue-50 to-indigo-100 py-8 px-4">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <header className="text-center mb-8">

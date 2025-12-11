@@ -15,7 +15,8 @@ export async function GET(request: Request) {
 
     const schedule = await getSchedule(weekStart);
     return NextResponse.json(schedule);
-  } catch (error) {
+  } catch (err) {
+    console.error("Failed to fetch schedule:", err);
     return NextResponse.json(
       { error: "Failed to fetch schedule" },
       { status: 500 }
@@ -36,7 +37,8 @@ export async function POST(request: Request) {
 
     await saveSchedule(weekStart, schedule);
     return NextResponse.json({ success: true });
-  } catch (error) {
+  } catch (err) {
+    console.error("Failed to save schedule:", err);
     return NextResponse.json(
       { error: "Failed to save schedule" },
       { status: 500 }

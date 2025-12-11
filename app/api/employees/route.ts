@@ -5,7 +5,8 @@ export async function GET() {
   try {
     const employees = await getEmployees();
     return NextResponse.json(employees);
-  } catch (error) {
+  } catch (err) {
+    console.error("Failed to fetch employees:", err);
     return NextResponse.json(
       { error: "Failed to fetch employees" },
       { status: 500 }
@@ -18,7 +19,8 @@ export async function POST(request: Request) {
     const employee = await request.json();
     await saveEmployee(employee);
     return NextResponse.json({ success: true });
-  } catch (error) {
+  } catch (err) {
+    console.error("Failed to save employee:", err);
     return NextResponse.json(
       { error: "Failed to save employee" },
       { status: 500 }

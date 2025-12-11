@@ -147,7 +147,6 @@ export default function ShiftPreferenceManager({
 
           {WEEKDAYS.map((day, index) => {
             const currentPref = getEmployeePreference(selectedEmployee, index);
-            const currentOption = getPreferenceOption(currentPref);
 
             return (
               <div

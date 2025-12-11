@@ -1,6 +1,6 @@
 "use client";
 
-import { getMonday, formatDate } from "@/lib/schedule";
+import { getMonday } from "@/lib/schedule";
 
 interface WeekNavigatorProps {
   currentWeekStart: Date;
