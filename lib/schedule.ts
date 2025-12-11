@@ -138,21 +138,23 @@ export const generateDaySchedule = (
   const ca1Valid = isShiftValid(assignedShifts.ca1);
   const ca2Valid = isShiftValid(assignedShifts.ca2);
 
-  // Nếu cả 2 ca đều hợp lệ → OK
+  // Nếu cả 2 ca đều hợp lệ → Giữ nguyên kết quả
   if (ca1Valid && ca2Valid) {
-    // Không làm gì
+    // Không làm gì, giữ nguyên assignedShifts từ assignEmployeesToBothShifts
   }
-  // Nếu có ca không hợp lệ và chỉ có 1 người đủ điều kiện
-  else if (qualifiedEmployees.length === 1 && (!ca1Valid || !ca2Valid)) {
-    const qualifiedId = qualifiedEmployees[0].id;
-    // Người đủ điều kiện phải làm full 2 ca
-    assignedShifts = {
-      ca1: [qualifiedId],
-      ca2: [qualifiedId],
-    };
-  }
-  // Nếu có nhiều người đủ điều kiện nhưng ca không hợp lệ
-  else if (qualifiedEmployees.length >= 2) {
+  // Chỉ fix khi có ca KHÔNG hợp lệ
+  else if (!ca1Valid || !ca2Valid) {
+    // Nếu chỉ có 1 người đủ điều kiện và có ca không hợp lệ
+    if (qualifiedEmployees.length === 1) {
+      const qualifiedId = qualifiedEmployees[0].id;
+      // Người đủ điều kiện phải làm full 2 ca
+      assignedShifts = {
+        ca1: [qualifiedId],
+        ca2: [qualifiedId],
+      };
+    }
+    // Nếu có nhiều người đủ điều kiện
+    else if (qualifiedEmployees.length >= 2) {
     // Ca 1 không hợp lệ
     if (!ca1Valid) {
       if (assignedShifts.ca1.length === 0) {
@@ -326,18 +328,32 @@ const assignEmployeesToBothShifts = (
     ca1Employees.push(ca1Qualified.id);
     usedEmployeeIds.add(ca1Qualified.id);
 
-    // Ghép thêm người chưa đủ điều kiện nếu có (ưu tiên theo preference)
-    if (needSupMorning.length > 0) {
-      ca1Employees.push(needSupMorning[0].id);
-      usedEmployeeIds.add(needSupMorning[0].id);
-    } else if (needSupFlexible.length > 0) {
-      ca1Employees.push(needSupFlexible[0].id);
-      usedEmployeeIds.add(needSupFlexible[0].id);
-    } else if (needSupEvening.length > 0 && needSupervision.length === 1) {
-      // Nếu chỉ có 1 người chưa đủ DK và prefer evening, vẫn ghép vào ca 1
-      ca1Employees.push(needSupEvening[0].id);
-      usedEmployeeIds.add(needSupEvening[0].id);
+    // CHỈ ghép thêm 1 người chưa đủ DK vào Ca 1 nếu:
+    // - Còn ít nhất 1 người đủ DK khác cho Ca 2, HOẶC
+    // - Tổng số người <= 2 (không đủ chia đều)
+    const remainingQualified = canWorkAlone.filter(
+      (e) => !usedEmployeeIds.has(e.id)
+    );
+
+    // Nếu còn người đủ DK khác cho ca 2, hoặc tổng chỉ có 2 người
+    if (
+      remainingQualified.length > 0 ||
+      availableEmployees.length <= 2
+    ) {
+      // Ghép thêm người chưa đủ DK (ưu tiên theo preference)
+      if (needSupMorning.length > 0) {
+        ca1Employees.push(needSupMorning[0].id);
+        usedEmployeeIds.add(needSupMorning[0].id);
+      } else if (needSupFlexible.length > 0) {
+        ca1Employees.push(needSupFlexible[0].id);
+        usedEmployeeIds.add(needSupFlexible[0].id);
+      } else if (needSupEvening.length > 0 && needSupervision.length === 1) {
+        // Nếu chỉ có 1 người chưa đủ DK, ghép luôn
+        ca1Employees.push(needSupEvening[0].id);
+        usedEmployeeIds.add(needSupEvening[0].id);
+      }
     }
+    // Nếu không còn người đủ DK cho ca 2 → Để Ca 1 chỉ có 1 người
   } else {
     // Không có người đủ điều kiện, phải ghép 2 người chưa đủ điều kiện
     if (needSupMorning.length > 0) {
